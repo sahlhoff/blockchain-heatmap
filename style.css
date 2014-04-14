@@ -1,0 +1,27 @@
+#map_canvas{
+  height:100%;
+}
+
+.container {
+  width: 60%;
+  height: 60%;
+  float: left;
+}
+
+#transactionList {
+  height: 90%;
+  list-style: none;
+  text-align: center;
+  width: 30%;
+  overflow: scroll;
+}
+
+#transactionList a {
+  text-decoration: none;
+}
+
+#transactionList li {
+  font-size: 14px;
+  border-bottom: 1px solid black;
+  padding: 5px;
+}

@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title></title>
+  <link href="https://google-developers.appspot.com/maps/documentation/javascript/examples/default.css" rel="stylesheet" type="text/css" />
+  <link rel="stylesheet" type="text/css" href="./style.css">
+  <script src="http://code.jquery.com/jquery-latest.js"></script>
+  <script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?sensor=false&libraries=visualization"></script>
+</head>
+<body>
+  <div class="container">
+    <div id="map_canvas"></div>
+  </div>
+  <ul id="transactionList">
+    
+  </ul>
+</body>
+<script>
+  // GMAPS configuration
+  var myLatlng = new google.maps.LatLng(17.7850,-12.4183);
+  
+  var light_grey_style = [{"featureType":"landscape","stylers":[{"saturation":-100},{"lightness":65},{"visibility":"on"}]},{"featureType":"poi","stylers":[{"saturation":-100},{"lightness":51},{"visibility":"simplified"}]},{"featureType":"road.highway","stylers":[{"saturation":-100},{"visibility":"simplified"}]},{"featureType":"road.arterial","stylers":[{"saturation":-100},{"lightness":30},{"visibility":"on"}]},{"featureType":"road.local","stylers":[{"saturation":-100},{"lightness":40},{"visibility":"on"}]},{"featureType":"transit","stylers":[{"saturation":-100},{"visibility":"simplified"}]},{"featureType":"administrative.province","stylers":[{"visibility":"off"}]},{"featureType":"water","elementType":"labels","stylers":[{"visibility":"on"},{"lightness":-25},{"saturation":-100}]},{"featureType":"water","elementType":"geometry","stylers":[{"hue":"#ffff00"},{"lightness":-25},{"saturation":-97}]}];
+  
+  var myOptions = {
+    zoom: 2,
+    center: myLatlng,
+    mapTypeId: google.maps.MapTypeId.ROADMAP,
+    mapTypeControl: true,
+    mapTypeControlOptions: {
+      style: google.maps.MapTypeControlStyle.HORIZONTAL_BAR,
+      position: google.maps.ControlPosition.LEFT_BOTTOM
+    },
+    styles: light_grey_style
+  };
+
+  var map = new google.maps.Map(document.getElementById("map_canvas"), myOptions);
+
+  var heatmap;
+  var liveTransactions = new google.maps.MVCArray();
+  heatmap = new google.maps.visualization.HeatmapLayer({
+    data: liveTransactions,
+    radius: 25
+  });
+  heatmap.setMap(map);
+
+  // Blockchain socket
+  var socket = new WebSocket('ws://ws.blockchain.info:8335/inv');
+
+  // Geoip url
+  var geoIp = 'http://freegeoip.net/json/';
+  var blockchain = 'https://blockchain.info/tx/';
+
+  var transactionList = document.getElementById('transactionList');
+
+  socket.onopen = function(evt) { 
+    socket.send('{"op":"unconfirmed_sub"}');
+  };
+  socket.onmessage = function(evt) {
+    var transaction = jQuery.parseJSON(evt.data);
+    getGeoLocation(transaction);
+  }; 
+
+  socket.onclose = function(evt) { alert("Connection closed."); };
+
+  function getGeoLocation (transaction){
+    var url = geoIp+transaction.x.relayed_by;
+    $.ajax({
+      url: url,
+      type: 'GET',
+      crossDomain: true,
+      dataType: 'jsonp'
+    }).done(function(geo){
+      if(geo.longitude!=0){
+        transaction.geo = geo;
+        onGeo(transaction);
+        renderTransaction(transaction);
+      }
+    });
+  };
+
+  function onGeo (transaction){
+    if(transaction.geo.longitude != 0){
+      var transactionLocation = new google.maps.LatLng(transaction.geo.latitude, transaction.geo.longitude);
+      liveTransactions.push(transactionLocation);
+
+      // Set marker on the map
+      var image = "./small-dot-icon.png";
+      var marker = new google.maps.Marker({
+        position: transactionLocation,
+        map: map,
+        icon: image
+      });
+      marker.setMap(null);
+    }
+  }
+
+  function renderTransaction(transaction){
+    var transactionItem = document.createElement('li');
+    var city = transaction.geo.city;
+    var country = transaction.geo.country_name;
+    var region = transaction.geo.region_name;
+
+    var hash = transaction.x.hash;
+    var value = 0;
+
+    hashUrl = blockchain + hash;
+
+    for(var i=0;i<transaction.x.out.length;i++){
+      value += transaction.x.out[i].value;
+    }
+
+    transactionItem.innerHTML = city + ' ' + ' ' + region + ' ' + country + ' <a href="' + hashUrl + '" target="_blank">' + (value/100000000) + '</a>';
+    $(transactionItem).hide();
+    $(transactionList).prepend(transactionItem);
+    $(transactionItem).fadeIn();
+  }
+</script>
+</html>
