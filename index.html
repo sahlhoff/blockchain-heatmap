@@ -1,7 +1,9 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title></title>
+  <title>Bitcoin Heatmap | ffohlhaS</title>
+  <link href='http://fonts.googleapis.com/css?family=Chango' rel='stylesheet' type='text/css'>
+  <link href='http://fonts.googleapis.com/css?family=Voces|Source+Sans+Pro:200' rel='stylesheet' type='text/css'>
   <link href="https://google-developers.appspot.com/maps/documentation/javascript/examples/default.css" rel="stylesheet" type="text/css" />
   <link rel="stylesheet" type="text/css" href="./style.css">
   <script src="http://code.jquery.com/jquery-latest.js"></script>
@@ -18,13 +20,20 @@
   </script>
 </head>
 <body>
+  <header>
+    <div id="nav">
+      <div id="logo">SAHLHOFF</div>
+      <div id="subnav">
+        <a href="http://sahlhoff.com/#about" id="nav-about">About</a>
+      </div>
+    </div>
+  </header>
   <div class="container">
     <div id="map_canvas"></div>
     <div id="country_stats">
     </div>
   </div>
   <ul id="transactionList">
-    
   </ul>
 </body>
 <script>
@@ -69,7 +78,7 @@
   };
   socket.onmessage = function(evt) {
     var transaction = jQuery.parseJSON(evt.data);
-    getGeoLocation(transaction);
+    //getGeoLocation(transaction);
   }; 
 
   socket.onclose = function(evt) { alert("Connection closed."); };
