@@ -9,6 +9,7 @@ body {
 }
 
 #map_canvas{
+  top: 150px;
   height:60%;
   margin-bottom: 30px;
 }
